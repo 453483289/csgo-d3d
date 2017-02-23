@@ -1,4 +1,4 @@
-//csgo d3d 0.1 by n7
+//csgo d3d 0.2 by n7
 
 #include "main.h" //less important stuff & helper funcs here
 
@@ -94,12 +94,12 @@ HRESULT APIENTRY DrawIndexedPrimitive_hook(IDirect3DDevice9* pDevice, D3DPRIMITI
 	}
 
 	//get ct_legs for aimbot
-	if (aimbot == 1 && CT_LEGS && decl->Type == 2 && numElements == 12)
+	if ((aimbot == 1 && CT_LEGS && decl->Type == 2)&&(numElements == 9 || numElements == 12)) //filter out fake or wrong entities
 	{
 		AddLegAim(pDevice, 1);
 	}
 	//get t_legs for aimbot
-	if (aimbot == 2 && T_LEGS && decl->Type == 2 && numElements == 12)
+	if ((aimbot == 2 && T_LEGS && decl->Type == 2 )&& (numElements == 9 || numElements == 12)) //filter out fake or wrong entities
 	{
 		AddLegAim(pDevice, 2);
 	}
@@ -116,6 +116,10 @@ HRESULT APIENTRY DrawIndexedPrimitive_hook(IDirect3DDevice9* pDevice, D3DPRIMITI
 		AddCenteredAim(pDevice, 2);
 	}
 
+	//test w2s on new models
+	//if (new_sas_head || new_sas_eyes || new_sas_chest || new_sas_legs)
+	//if(new_sas_legs)
+		//AddAim(pDevice, 1);
 	/*
 	//logger
 	//hold down P key until a texture changes, press I to log values of those textures
@@ -127,7 +131,8 @@ HRESULT APIENTRY DrawIndexedPrimitive_hook(IDirect3DDevice9* pDevice, D3DPRIMITI
 		countnum = -1;
 	if (countnum == NumVertices/10)
 		if ((Stride > NULL) && (GetAsyncKeyState('I') & 1)) //press I to log to log.txt
-			Log("Stride == %d && NumVertices == %d && primCount == %d", Stride, NumVertices, primCount);
+			//Log("Stride == %d && NumVertices == %d && primCount == %d", Stride, NumVertices, primCount);
+			Log("Stride == %d && NumVertices == %d && primCount == %d && decl->Type == %d && numElements == %d && mStartRegister == %d && mVector4fCount == %d", Stride, NumVertices, primCount, decl->Type, numElements, mStartRegister, mVector4fCount);
 			//Log("texCRC == %x && Stride == %d && NumVertices == %d && primCount == %d && decl->Type == %d && numElements == %d && vSize == %d && pSize == %d && mStartRegister == %d && mVector4fCount == %d && vdesc.Size == %d && vdesc.Type == %d && mStage == %d", texCRC, Stride, NumVertices, primCount, decl->Type, numElements, vSize, pSize, mStartRegister, mVector4fCount, vdesc.Size, vdesc.Type, mStage);
 	if (countnum == NumVertices/10)
 	{
@@ -174,15 +179,6 @@ HRESULT APIENTRY EndScene_hook(IDirect3DDevice9* pDevice)
 
 	if (DoInit)
 	{
-		//generate circle shader
-		//DX9CreateEllipseShader(pDevice);
-
-		//circle vb
-		//pDevice->CreateVertexBuffer(sizeof(VERTEX) * 4, D3DUSAGE_WRITEONLY, FVF, D3DPOOL_DEFAULT, &vb, NULL);
-
-		//circle ib
-		//pDevice->CreateIndexBuffer((3 * 2) * 2, D3DUSAGE_WRITEONLY, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &ib, NULL);
-
 		LoadCfg();
 
 		//wallhack = Load("wallhack", "wallhack", wallhack, GetDirectoryFile("palaconfig.ini"));
@@ -429,8 +425,23 @@ HRESULT APIENTRY EndScene_hook(IDirect3DDevice9* pDevice)
 			astime = timeGetTime();
 		}
 	}
-
 	/*
+	//test newaim
+	if (AimInfo.size() != NULL)
+	{
+		for (unsigned int i = 0; i < AimInfo.size(); i++)
+		{
+			if (AimInfo[i].vOutX > 1 && AimInfo[i].vOutY > 1)
+			{
+				//drawpoint on CT
+				DrawPoint(pDevice, (int)AimInfo[i].vOutX, (int)AimInfo[i].vOutY, 6, 6, 0xFFFFFFFF);
+				//drawpic
+				//PrePresent(pDevice, (int)AimInfo[i].vOutX - 32, (int)AimInfo[i].vOutY - 20);
+			}
+		}
+	}
+	AimInfo.clear();
+	
 	//draw logger
 	if (pFont && countnum >= 0)
 	{

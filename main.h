@@ -51,7 +51,7 @@ UINT numElements;
 //int mStage;
 
 //logger
-//int countnum = -1;
+int countnum = -1;
 
 //==========================================================================================================================
 
@@ -125,7 +125,6 @@ float HandX, HandY;
 float LegX, LegY;
 void AddLegAim(LPDIRECT3DDEVICE9 Device, int iTeam)
 {
-	float centeredX, centeredY;
 	D3DXVECTOR3 from, toLeg;
 	D3DXMATRIX ViewProj, world, worldA, worldB;
 
@@ -161,14 +160,6 @@ void AddLegAim(LPDIRECT3DDEVICE9 Device, int iTeam)
 
 		LegX = toLeg[0];
 		LegY = toLeg[1];
-		//DrawPoint(Device, (int)LegX, (int)LegY, 6, 6, 0xFFFFFFFF);
-
-		if(LegX > 0 && HandX > 0)
-		{
-		centeredX = (LegX + HandX) / 2.0f;
-		centeredY = (LegY + HandY) / 2.0f;
-		//DrawPoint(Device, (int)centeredX, (int)centeredY, 6, 6, 0xFFFFFFFF); //wrong don't use me
-		}
 	}
 	else
 	{
@@ -177,7 +168,6 @@ void AddLegAim(LPDIRECT3DDEVICE9 Device, int iTeam)
 	}
 
 	AimLegInfo_t pAimLegInfo = { static_cast<float>(toLeg[0]), static_cast<float>(toLeg[1]), iTeam };
-	//AimLegInfo_t pAimLegInfo = { static_cast<float>(centeredX), static_cast<float>(centeredY), iTeam };
 	AimLegInfo.push_back(pAimLegInfo);
 }
 
@@ -193,7 +183,7 @@ std::vector<AimHandInfo_t>AimHandInfo;
 
 void AddHandAim(LPDIRECT3DDEVICE9 Device, int iTeam)
 {
-	float centeredX, centeredY;
+	//float centeredX, centeredY;
 	D3DXVECTOR3 from, toHand;
 	D3DXMATRIX ViewProj, world, worldA, worldB, worldC;
 
@@ -235,14 +225,6 @@ void AddHandAim(LPDIRECT3DDEVICE9 Device, int iTeam)
 
 		HandX = toHand[0];
 		HandY = toHand[1];
-		//DrawPoint(Device, (int)HandX, (int)HandY, 6, 6, 0xFFFFFF00);
-
-		if (LegX > 0 && HandX > 0)
-		{
-		centeredX = (HandX + LegX) / 2.0f;
-		centeredY = (HandY + LegY) / 2.0f;
-		//DrawPoint(Device, (int)centeredX, (int)centeredY, 6, 6, 0xFFFFFF00);
-		}
 	}
 	else
 	{
@@ -251,7 +233,6 @@ void AddHandAim(LPDIRECT3DDEVICE9 Device, int iTeam)
 	}
 
 	AimHandInfo_t pAimHandInfo = { static_cast<float>(toHand[0]), static_cast<float>(toHand[1]), iTeam };
-	//AimHandInfo_t pAimHandInfo = { static_cast<float>(centeredX), static_cast<float>(centeredY), iTeam };
 	AimHandInfo.push_back(pAimHandInfo);
 }
 
@@ -277,6 +258,71 @@ void AddCenteredAim(LPDIRECT3DDEVICE9 Device, int iTeam)
 	AimCenteredInfo_t pAimCenteredInfo = { static_cast<float>(centeredX), static_cast<float>(centeredY), iTeam };
 	AimCenteredInfo.push_back(pAimCenteredInfo);
 }
+
+
+
+/*
+//test worldtoscreen
+struct AimInfo_t
+{
+	float vOutX, vOutY;
+	INT       iTeam;
+	float CrosshairDistance;
+};
+std::vector<AimInfo_t>AimInfo;
+
+void AddAim(LPDIRECT3DDEVICE9 Device, int iTeam)
+{
+	D3DXVECTOR3 from, to;
+	D3DXMATRIX ViewProj, world, worldA, worldB, worldC;
+
+	//D3DVIEWPORT9 Viewport;
+	//Device->GetViewport(&Viewport);
+
+	//Hands AIM
+	//Device->GetVertexShaderConstantF(8, ViewProj, 4);
+	//Device->GetVertexShaderConstantF(58, worldA, 4); 
+	//Device->GetVertexShaderConstantF(160, worldB, 4); //right
+	//Device->GetVertexShaderConstantF(190, worldC, 4); //move back
+	//world = (worldA * 0.3333f) + (worldB * 0.3333f) + (worldC * 0.3333f); //center
+
+	//LEGS AIM
+	//worldB for legs 88, 91
+	//Device->GetVertexShaderConstantF(8, ViewProj, 4);
+	//Device->GetVertexShaderConstantF(58, worldA, 4); //left
+	//Device->GetVertexShaderConstantF(88, worldB, 4); //right
+	world = (worldA * 0.5f) + (worldB * 0.5f); //center
+
+	float w = 0.0f;
+	to[0] = ViewProj[0] * world._14 + ViewProj[1] * world._24 + ViewProj[2] * world._34 + ViewProj[3];
+	to[1] = ViewProj[4] * world._14 + ViewProj[5] * world._24 + ViewProj[6] * world._34 + ViewProj[7]; //+height
+	w = ViewProj[12] * world._14 + ViewProj[13] * world._24 + ViewProj[14] * world._34 + ViewProj[15];
+
+	if (w > 0.01f)
+	{
+		float invw = 1.0f / w;
+		to[0] *= invw;
+		to[1] *= invw;
+
+		float x = Viewport.Width / 2.0f;
+		float y = Viewport.Height / 2.0f;
+
+		x += 0.5f * to[0] * Viewport.Width + 0.5f;
+		y -= 0.5f * to[1] * Viewport.Height + 0.5f;
+		to[0] = x + Viewport.X;
+		to[1] = y + Viewport.Y;
+	}
+	else
+	{
+		to[0] = -1.0f;
+		to[1] = -1.0f;
+	}
+
+	AimInfo_t pAimInfo = { static_cast<float>(to[0]), static_cast<float>(to[1]), iTeam };
+	AimInfo.push_back(pAimInfo);
+}
+*/
+
 
 //==========================================================================================================================
 
@@ -306,13 +352,13 @@ void AddCenteredAim(LPDIRECT3DDEVICE9 Device, int iTeam)
 #define ct_sas_body ((Stride==32) && (NumVertices==5443) && (primCount==8008))
 
 //New d3d model rec for SAS(12 / 13 / 2016 csgo update) :
-#define new_sasA (NumVertices == 5299) && (primCount == 7167)//head -
-#define new_sasB (NumVertices == 136) && (primCount == 204)//eyes - 
-#define new_sasC (NumVertices == 1967) && (primCount == 2720)//chest - 
-#define new_sasD (NumVertices == 2052) && (primCount == 2966)//hands - 
-#define new_sasE (NumVertices == 2482) && (primCount == 3414)//legs - 
+#define new_sas_head ((Stride==32) && (NumVertices == 5299) && (primCount == 7167))//head -
+#define new_sas_eyes ((Stride==32) && (NumVertices == 136) && (primCount == 204))//eyes - 
+#define new_sas_chest ((Stride==32) && (NumVertices == 1967) && (primCount == 2720))//chest - 
+#define new_sas_hands ((Stride==32) && (NumVertices == 2052) && (primCount == 2966))//hands - 
+#define new_sas_legs ((Stride==32) && (NumVertices == 2482) && (primCount == 3414))//legs - 
 
-#define ct_sas ct_sas_legs || ct_sas_head || ct_sas_body
+#define ct_sas ct_sas_legs || ct_sas_head || ct_sas_body || new_sas_head || new_sas_eyes || new_sas_chest || new_sas_legs
 
 
 //FBI
@@ -386,7 +432,7 @@ void AddCenteredAim(LPDIRECT3DDEVICE9 Device, int iTeam)
 #define CT_Heads (ct_idf_head1 || ct_idf_head2 || ct_sas_head || ct_fbi_head1 || ct_fbi_head2 || ct_fbi_head3 || ct_fbi_head4 || ct_fbi_head5 || ct_swat_head1 || ct_swat_head2 || ct_swat_head3 || ct_swat_head4 || ct_swat_head5 || ct_gsg9_head1 || ct_gsg9_head2 || ct_gsg9_head3 || ct_gign_head1 || ct_gign_head2 || ct_gign_head3 || ct_seal_head1 || ct_seal_head2 || ct_seal_head3 || ct_seal_head4 || ct_seal_head5)
 
 //CT Legs
-#define CT_LEGS (ct_idf_legs||ct_sas_legs||ct_fbi_legs||ct_swat_legs||ct_gsg9_legs||ct_gign_legs||ct_seal_legs1||ct_seal_legs2) 
+#define CT_LEGS (ct_idf_legs||ct_sas_legs||new_sas_legs||ct_fbi_legs||ct_swat_legs||ct_gsg9_legs||ct_gign_legs||ct_seal_legs1||ct_seal_legs2) 
 
 //////////////////////
 //		T 			//
@@ -858,7 +904,7 @@ void Drawmenu(LPDIRECT3DDEVICE9 pDevice)
 
 		Current = 1;
 		//Categor(pDevice, " [D3D]");
-		AddItem(pDevice, " Wallhack", wallhack, opt_WhChams, 2);
+		AddItem(pDevice, " Wallhack", wallhack, opt_WhChams, 1);
 		AddItem(pDevice, " Esp", esp, opt_OnOff, 1);
 		AddItem(pDevice, " Aimbot", aimbot, opt_Teams, 2);
 		AddItem(pDevice, " Aimkey", aimkey, opt_Keys, 8);
